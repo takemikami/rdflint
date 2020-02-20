@@ -1,0 +1,8 @@
+baseUri: https://sparql.crssnky.xyz/imasrdf/
+validation:
+  mapList:
+    enable: true
+    prefixes:
+      - url: https://www.w3.org/2002/07/owl
+        startswith: http://www.w3.org/2002/07/owl#
+        langtype: turtle

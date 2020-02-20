@@ -6,6 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.github.imas.rdflint.config.RdfLintParameters;
+import com.github.imas.rdflint.validator.AbstractRdfValidator;
+import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.junit.Test;
 
@@ -16,23 +18,146 @@ public class RdfLintTest {
   }
 
   @Test
-  public void loadConfig() throws Exception {
+  public void loadConfigOk() throws Exception {
     RdfLint lint = new RdfLint();
-    RdfLintParameters params = lint.loadConfig(getParentPath("config_ok/rdflint-config.yml"));
+    RdfLintParameters params = lint.loadConfig(getParentPath("config/rdflint-config-ok.yml"));
 
     assertEquals("https://sparql.crssnky.xyz/imasrdf/", params.getBaseUri());
     assertEquals("valid.rdf", params.getRules().get(0).getTarget());
   }
 
   @Test
-  public void loadConfigValid() throws Exception {
+  public void loadConfigValidationMap() throws Exception {
     RdfLint lint = new RdfLint();
     RdfLintParameters params = lint
-        .loadConfig(getParentPath("config/rdflint-config-validation.yml"));
+        .loadConfig(getParentPath("config/rdflint-config-validation-map.yml"));
+    MapValidator validator = new MapValidator();
+    MapValidator.MapValidatorConfiguration conf = validator.makeConfiguration();
+    lint.parseValidationConfiguration(params, validator, conf);
 
     assertEquals("https://sparql.crssnky.xyz/imasrdf/", params.getBaseUri());
-    assertEquals("value", params.getValidation().get("hoge"));
+    assertEquals("https://www.w3.org/2002/07/owl", conf.getUrl());
+    assertEquals("http://www.w3.org/2002/07/owl#", conf.getStartswith());
+    assertEquals("turtle", conf.getLangtype());
   }
+
+  public class MapValidator extends AbstractRdfValidator {
+
+    public MapValidatorConfiguration makeConfiguration() {
+      return new MapValidatorConfiguration();
+    }
+
+    public class MapValidatorConfiguration {
+
+      String url;
+      String startswith;
+      String langtype;
+
+      public void setUrl(String url) {
+        this.url = url;
+      }
+
+      public String getUrl() {
+        return this.url;
+      }
+
+      public void setStartswith(String startswith) {
+        this.startswith = startswith;
+      }
+
+      public String getStartswith() {
+        return this.startswith;
+      }
+
+      public void setLangtype(String langtype) {
+        this.langtype = langtype;
+      }
+
+      public String getLangtype() {
+        return this.langtype;
+      }
+    }
+  }
+
+  @Test
+  public void loadConfigValidationMapList() throws Exception {
+    RdfLint lint = new RdfLint();
+    RdfLintParameters params = lint
+        .loadConfig(getParentPath("config/rdflint-config-validation-maplist.yml"));
+    MapListValidator validator = new MapListValidator();
+    MapListValidator.MapListValidatorConfiguration conf = validator.makeConfiguration();
+    lint.parseValidationConfiguration(params, validator, conf);
+
+    assertEquals("https://sparql.crssnky.xyz/imasrdf/", params.getBaseUri());
+    assertEquals("true", conf.getEnable());
+    assertEquals(1, conf.getPrefixes().size());
+    assertEquals("https://www.w3.org/2002/07/owl", conf.getPrefixes().get(0).getUrl());
+    assertEquals("http://www.w3.org/2002/07/owl#", conf.getPrefixes().get(0).getStartswith());
+    assertEquals("turtle", conf.getPrefixes().get(0).getLangtype());
+  }
+
+  public class MapListValidator extends AbstractRdfValidator {
+
+    public MapListValidatorConfiguration makeConfiguration() {
+      return new MapListValidatorConfiguration();
+    }
+
+    public class MapListValidatorConfiguration {
+
+      String enable;
+      List<Prefix> prefixes;
+
+      public void setEnable(String enable) {
+        this.enable = enable;
+      }
+
+      public String getEnable() {
+        return this.enable;
+      }
+
+      public void setPrefixes(List<Prefix> prefixes) {
+        this.prefixes = prefixes;
+      }
+
+      public List<Prefix> getPrefixes() {
+        return prefixes;
+      }
+
+      public class Prefix {
+
+        String url;
+        String startswith;
+        String langtype;
+
+        public void setUrl(String url) {
+          this.url = url;
+        }
+
+        public String getUrl() {
+          return this.url;
+        }
+
+        public void setStartswith(String startswith) {
+          this.startswith = startswith;
+        }
+
+        public String getStartswith() {
+          return this.startswith;
+        }
+
+        public void setLangtype(String langtype) {
+          this.langtype = langtype;
+        }
+
+        public String getLangtype() {
+          return this.langtype;
+        }
+      }
+
+    }
+
+  }
+
 
   @Test
   public void degradeCheckOk() throws Exception {

@@ -1,16 +1,25 @@
 package com.github.imas.rdflint;
 
 import com.github.imas.rdflint.config.RdfLintParameters;
+import com.github.imas.rdflint.validator.RdfValidator;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -204,6 +213,138 @@ public class RdfLint {
             Files.newInputStream(Paths.get(new File(configPath).getCanonicalPath())),
             StandardCharsets.UTF_8),
         RdfLintParameters.class);
+  }
+
+  public void parseValidationConfiguration(
+      RdfLintParameters params, RdfValidator validator, Object conf)
+      throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, NoSuchFieldException, InstantiationException, ClassNotFoundException {
+    // detect validator name
+    String clzName = validator.getClass().getSimpleName();
+    if (clzName.length() > "Validator".length()) {
+      clzName = clzName.substring(0, clzName.length() - "Validator".length());
+    }
+    String validatorName = clzName.substring(0, 1).toLowerCase() + clzName.substring(1);
+
+    // validator params to config object
+    Object paramObj = params.getValidation().get(validatorName);
+    System.out.println(paramObj);
+    if (paramObj instanceof Map) {
+      Map map = (Map) paramObj;
+      for (Object key : map.keySet()) {
+        System.out.println(key);
+        if (map.get(key) instanceof Map) {
+
+        } else if (map.get(key) instanceof List) {
+          BeanUtils.setProperty(conf, key.toString(), new LinkedList<>());
+          for (Object e : (List) map.get(key)) {
+            List lst2 = (List) PropertyUtils.getProperty(conf, key.toString());
+//            System.out.println(PropertyUtils.getPropertyType(conf, key.toString() + "[0]."));
+//            PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(conf, key.toString());
+//            System.out.println(PropertyUtils.getPropertyDescriptor(conf, key.toString()));
+//
+//            System.out.println(conf.getClass());
+            Field f = conf.getClass().getDeclaredField(key.toString());
+//            System.out.println(f.getGenericType());
+//            System.out.println(f.getGenericType().getTypeName().split("<")[1].split(">")[0]);
+            String className = f.getGenericType().getTypeName().split("<")[1].split(">")[0];
+//            Object o = Class.forName(className).getDeclaredConstructor(new Class[]{}).newInstance();
+//            Constructor ct = Class.forName(className).getDeclaredConstructor(new Class[]{});
+            Constructor[] cts = Class.forName(className).getConstructors();
+            System.out.println(cts);
+            Constructor ct = cts[0];
+            System.out.println(ct.getParameterTypes());
+            Class[] ptypes = ct.getParameterTypes();
+            System.out.println(ct);
+            ct.setAccessible(true);
+////            Object o = ct.newInstance(validator);
+//            Object o = ct.newInstance(conf);
+            Object o;
+
+            if (ptypes[0] == conf.getClass()) {
+              o = ct.newInstance(conf);
+            } else {
+              o = ct.newInstance();
+            }
+
+            System.out.println(o.getClass());
+//            System.out.println(f.getGenericType().getClass());
+//            Constructor ct = f.getGenericType().getClass().getDeclaredConstructor(new Class[]{});
+//            ct.setAccessible(true);
+//            Object o = ct.newInstance();
+            lst2.add(o);
+
+//                Field field3 = GenericTest.class.getField("objs3");
+//            System.out.println("[objs3]");
+//            type = field3.getGenericType();
+//            System.out.println(type + " : " + type.getClass());
+
+//            PropertyUtils.set
+//            lst2.add();
+//            lst.add(null);
+            if (e instanceof Map) {
+              Map subMap = (Map) e;
+              for (Object subKey : subMap.keySet()) {
+                System.out
+                    .println(String.format("%s[%d].%s", key.toString(), 0, subKey.toString()));
+                System.out.println(subMap.get(subKey));
+                PropertyUtils.setNestedProperty(conf,
+                    String.format("%s[%d].%s", key.toString(), 0, subKey.toString()),
+                    subMap.get(subKey));
+//                BeanUtils.setProperty(conf,
+//                    String.format("%s[%d].%s", key.toString(), 0, subKey.toString()),
+//                    subMap.get(subKey));
+              }
+            }
+          }
+
+//          BeanUtils.setProperty(conf, key.toString(), map.get(key));
+
+        } else {
+          BeanUtils.setProperty(conf, key.toString(), map.get(key));
+        }
+      }
+//      BeanUtils.setProperty(conf );
+
+//      validationParamMap = makeStringMap((Map) paramObj);
+//    } else if (paramObj instanceof List) {
+//      for (Object obj : (List) paramObj) {
+//        if (obj instanceof Map) {
+//          validationParamMapList.add(makeStringMap((Map) obj));
+//        }
+//      }
+    }
+    //    v.getValidatorName();
+//    String clzName = this.getClass().getSimpleName();
+//    if (clzName.length() > "Validator".length()) {
+//      clzName = clzName.substring(0, clzName.length() - "Validator".length());
+//    }
+//    validatorName = clzName.substring(0, 1).toLowerCase() + clzName.substring(1);
+
+//    this.params = params;
+//    validationParams = null;
+//    if (this.params != null && this.params.getValidation() != null) {
+//      validationParams = this.params.getValidation().get(this.getValidatorName());
+//    }
+
+    //    BeanUtils.setProperty();
+
+//    Class[] cArg = new Class[1];
+//    cArg[0] = Integer.class;
+////    Object o = clz.getDeclaredConstructor(cArg).newInstance();
+//    Constructor ct = clz.getConstructor(cArg);
+//    Object o = ct.newInstance(1);
+//    return null;
+  }
+
+  private Map<String, String> makeStringMap(Map paramObj) {
+    Map<String, String> map = new ConcurrentHashMap<>();
+    for (Object obj : ((Map) paramObj).entrySet()) {
+      if (obj instanceof Map.Entry) {
+        Map.Entry e = (Map.Entry) obj;
+        map.put(e.getKey().toString(), e.getValue().toString());
+      }
+    }
+    return map;
   }
 
   /**

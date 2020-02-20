@@ -18,6 +18,7 @@ repositories {
 dependencies {
     compile 'org.apache.jena:jena-arq:3.9.0'
     compile 'commons-cli:commons-cli:1.4'
+    compile 'commons-beanutils:commons-beanutils:1.9.4'
     compile 'org.jline:jline:3.9.0'
     compile 'org.yaml:snakeyaml:1.23'
     compile 'org.codehaus.groovy:groovy:3.0.0-rc-3'
