@@ -1,5 +1,10 @@
 # vscode-rdflint
 
+__Deprecated__  
+Please use tasks, ref [Document-Integration](https://imas.github.io/rdflint/integration/#visual-studio-code)
+
+----
+
 [![Marketplace Version](https://vsmarketplacebadge.apphb.com/version/takemikami.vscode-rdflint.svg "Current Release")](https://marketplace.visualstudio.com/items?itemName=takemikami.vscode-rdflint)
 
 Provides RDF language support via [rdflint](https://github.com/imas/rdflint).
